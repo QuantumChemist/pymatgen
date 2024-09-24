@@ -49,7 +49,7 @@ class TestTrajectory(PymatgenTest):
         if traj_1.species != traj_2.species:
             return False
 
-        return all(frame1 == frame2 for frame1, frame2 in zip(self.traj, traj_2))
+        return all(frame1 == frame2 for frame1, frame2 in zip(self.traj, traj_2, strict=False))
 
     def _get_lattice_species_and_coords(self):
         lattice = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
@@ -123,12 +123,12 @@ class TestTrajectory(PymatgenTest):
         self.traj.to_displacements()
         self.traj.to_positions()
 
-        assert all(struct == self.structures[i] for i, struct in enumerate(self.traj))
+        assert all(struct == self.structures[idx] for idx, struct in enumerate(self.traj))
 
         self.traj_mols.to_displacements()
         self.traj_mols.to_positions()
 
-        assert all(mol == self.molecules[i] for i, mol in enumerate(self.traj_mols))
+        assert all(mol == self.molecules[idx] for idx, mol in enumerate(self.traj_mols))
 
     def test_site_properties(self):
         lattice, species, coords = self._get_lattice_species_and_coords()
@@ -390,7 +390,7 @@ class TestTrajectory(PymatgenTest):
         traj_1 = Trajectory(lattice=lattice, species=species, coords=coords, frame_properties=props_1)
 
         # energy and pressure properties
-        props_2 = [{"energy": e, "pressure": p} for e, p in zip(energy_2, pressure_2)]
+        props_2 = [{"energy": e, "pressure": p} for e, p in zip(energy_2, pressure_2, strict=True)]
         traj_2 = Trajectory(lattice=lattice, species=species, coords=coords, frame_properties=props_2)
 
         # no properties
@@ -448,7 +448,9 @@ class TestTrajectory(PymatgenTest):
         traj = Trajectory.from_structures(structures, constant_lattice=False)
 
         # Check if lattices were properly stored
-        assert all(np.allclose(struct.lattice.matrix, structures[i].lattice.matrix) for i, struct in enumerate(traj))
+        assert all(
+            np.allclose(struct.lattice.matrix, structures[idx].lattice.matrix) for idx, struct in enumerate(traj)
+        )
 
         # Check if the file is written correctly when lattice is not constant.
         traj.write_Xdatcar(filename=f"{self.tmp_path}/traj_test_XDATCAR")

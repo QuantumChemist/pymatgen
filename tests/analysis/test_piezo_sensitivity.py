@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import pickle
-import sys
+import platform
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-import pymatgen
 from pymatgen.analysis.piezo_sensitivity import (
     BornEffectiveCharge,
     ForceConstantMatrix,
@@ -17,6 +16,7 @@ from pymatgen.analysis.piezo_sensitivity import (
     get_piezo,
     rand_piezo,
 )
+from pymatgen.io.phonopy import get_phonopy_structure
 from pymatgen.util.testing import TEST_FILES_DIR, PymatgenTest
 
 try:
@@ -209,7 +209,7 @@ class TestPiezoSensitivity(PymatgenTest):
             assert_allclose(asum2, np.zeros([3, 3]), atol=1e-5)
 
     @pytest.mark.skipif(
-        sys.platform == "win32" and int(np.__version__[0]) >= 2,
+        platform.system() == "Windows" and int(np.__version__[0]) >= 2,
         reason="See https://github.com/conda-forge/phonopy-feedstock/pull/158#issuecomment-2227506701",
     )
     def test_rand_fcm(self):
@@ -217,7 +217,7 @@ class TestPiezoSensitivity(PymatgenTest):
         fcm = ForceConstantMatrix(self.piezo_struct, self.FCM, self.point_ops, self.shared_ops)
         fcm.get_FCM_operations()
         rand_FCM = fcm.get_rand_FCM()
-        structure = pymatgen.io.phonopy.get_phonopy_structure(self.piezo_struct)
+        structure = get_phonopy_structure(self.piezo_struct)
         pn_struct = Phonopy(structure, np.eye(3), np.eye(3))
 
         pn_struct.set_force_constants(rand_FCM)
@@ -263,7 +263,7 @@ class TestPiezoSensitivity(PymatgenTest):
         assert_allclose(piezo, self.piezo, atol=1e-5)
 
     @pytest.mark.skipif(
-        sys.platform == "win32" and int(np.__version__[0]) >= 2,
+        platform.system() == "Windows" and int(np.__version__[0]) >= 2,
         reason="See https://github.com/conda-forge/phonopy-feedstock/pull/158#issuecomment-2227506701",
     )
     def test_rand_piezo(self):
@@ -288,7 +288,7 @@ class TestPiezoSensitivity(PymatgenTest):
                     atol=1e-3,
                 )
 
-        structure = pymatgen.io.phonopy.get_phonopy_structure(self.piezo_struct)
+        structure = get_phonopy_structure(self.piezo_struct)
         pn_struct = Phonopy(structure, np.eye(3), np.eye(3))
 
         pn_struct.set_force_constants(rand_FCM)

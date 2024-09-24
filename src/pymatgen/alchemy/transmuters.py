@@ -18,8 +18,7 @@ from pymatgen.alchemy.materials import TransformedStructure
 from pymatgen.io.vasp.sets import MPRelaxSet, VaspInputSet
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from typing import Callable
+    from collections.abc import Callable, Sequence
 
     from typing_extensions import Self
 
@@ -38,7 +37,7 @@ class StandardTransmuter:
     transformations on many structures to generate TransformedStructures.
 
     Attributes:
-        transformed_structures (list[Structure]): List of all transformed structures.
+        transformed_structures (list[Structure]): All transformed structures.
     """
 
     def __init__(
@@ -197,12 +196,12 @@ class StandardTransmuter:
         Args:
             trafo_structs_or_transmuter: A list of transformed structures or a transmuter.
         """
-        if isinstance(trafo_structs_or_transmuter, self.__class__):
-            self.transformed_structures += trafo_structs_or_transmuter.transformed_structures
-        else:
-            for ts in trafo_structs_or_transmuter:
-                assert isinstance(ts, TransformedStructure)
-            self.transformed_structures += trafo_structs_or_transmuter
+        if not isinstance(trafo_structs_or_transmuter, self.__class__) and not all(
+            isinstance(ts, TransformedStructure) for ts in trafo_structs_or_transmuter
+        ):
+            raise TypeError("Some transformed structure has incorrect type.")
+
+        self.transformed_structures += trafo_structs_or_transmuter
 
     @classmethod
     def from_structures(cls, structures, transformations=None, extend_collection=0) -> Self:
@@ -263,7 +262,7 @@ class CifTransmuter(StandardTransmuter):
         containing multiple structures.
 
         Args:
-            filenames: List of strings of the CIF files
+            filenames (list[str]): The CIF file paths.
             transformations: New transformations to be applied to all
                 structures
             primitive: Same meaning as in __init__.
@@ -287,7 +286,7 @@ class PoscarTransmuter(StandardTransmuter):
     def __init__(self, poscar_string, transformations=None, extend_collection=False):
         """
         Args:
-            poscar_string: List of POSCAR strings
+            poscar_string (list[str]): POSCAR strings.
             transformations: New transformations to be applied to all
                 structures.
             extend_collection: Whether to use more than one output structure
@@ -302,7 +301,7 @@ class PoscarTransmuter(StandardTransmuter):
         POSCAR filenames.
 
         Args:
-            poscar_filenames: List of POSCAR filenames
+            poscar_filenames (list[str]): The POSCAR file paths.
             transformations: New transformations to be applied to all
                 structures.
             extend_collection:
